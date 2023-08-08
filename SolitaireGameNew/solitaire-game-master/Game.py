@@ -4,9 +4,11 @@ from Deck import Deck
 from Waste import Waste
 from Foundation import Foundation
 from Table import Table
+import random
 
+random.seed()
 pygame.init()
-window_size = (1080, 720) # 1080, 720
+window_size = (1080, 720)  # 1080, 720
 screen = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Solitaire Game")
 logo = pygame.image.load("solitaire_logo.png")
@@ -31,23 +33,24 @@ score = 0
 frame = 0
 time = 0
 
-# place_sound = pygame.mixer.Sound('assets/flip.wav')
-# shuffle_sound = pygame.mixer.Sound('assets/shuffle.wav')
+place_sound = pygame.mixer.Sound('assets/flip.wav')
+shuffle_sound = pygame.mixer.Sound('assets/shuffle.wav')
 # shuffle_sound.play()
+
+cards_in_foundations = {}  # Initialize the dictionary
 
 
 def clicked_new_card(mouse_x, mouse_y):
     global moves
     if mouse_x > 129 and mouse_x < 226 and mouse_y > 14 and mouse_y < 155:
-    # if mouse_x > 9 and mouse_x < 106 and mouse_y > 14 and mouse_y < 155:
         if len(deck.get_deck()) <= 0:
             deck.add_cards(list(reversed(waste.get_waste_pile().copy())))
             waste.empty()
-            # shuffle_sound.play()
+            shuffle_sound.play()
         else:
             moves += 1
             waste.add_card(deck.remove_card())
-            # place_sound.play()
+            place_sound.play()
 
 
 def check_holding_card(mouse_x, mouse_y):
@@ -84,6 +87,16 @@ def check_holding_card(mouse_x, mouse_y):
 def place_card(mouse_x, mouse_y):
     global holding_card_group, holding_cards, mouse_cords, tables, moves, score
 
+    # Check if the cards are kings and are being moved to an empty pile
+    if len(holding_cards) > 1 and all(
+            card.get_value() == 13 for card in holding_cards) and holding_card_group.bottom_card() is None:
+        holding_card_group.add_cards(holding_cards)
+        for card in holding_cards:
+            holding_card_group.remove_card()
+            place_sound.play()
+            moves += 1
+        return
+
     # Autofill with click
     if mouse_cords == (mouse_x, mouse_y):
         if len(holding_cards) == 1:
@@ -94,39 +107,41 @@ def place_card(mouse_x, mouse_y):
                         if foundation_card.get_value() + 1 == holding_cards[0].get_value():
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
-                            score += 5  # Increment score by 5
+                            if holding_cards[0] not in cards_in_foundations:
+                                score += 5
+                                cards_in_foundations[holding_cards[0]] = True
                             return
                     else:
                         if holding_cards[0].get_value() == 1:
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
-                            score += 5  # Increment score by 5
+                            if holding_cards[0] not in cards_in_foundations:
+                                score += 5
+                                cards_in_foundations[holding_cards[0]] = True
                             return
 
-        for table in tables:
-            bottom_card = table.bottom_card()
-            if bottom_card != None:
-                value = bottom_card.get_value()
-                if bottom_card.get_color() != holding_cards[0].get_color() and value - 1 == holding_cards[
-                    0].get_value():
-                    table.add_cards(holding_cards)
-                    for card in holding_cards:
-                        holding_card_group.remove_card()
-                        # place_sound.play()
-                        moves += 1
-                    return
-            else:
-                if holding_cards[0].get_value() == 13:
-                    table.add_cards(holding_cards)
-                    for card in holding_cards:
-                        holding_card_group.remove_card()
-                    # place_sound.play()
+    for table in tables:
+        bottom_card = table.bottom_card()
+        if bottom_card is None and holding_cards[0].get_value() == 13:
+            table.add_cards(holding_cards)
+            for card in holding_cards:
+                holding_card_group.remove_card()
+                place_sound.play()
+                moves += 1
+            return
+        elif bottom_card is not None:
+            value = bottom_card.get_value()
+            if bottom_card.get_color() != holding_cards[0].get_color() and value - 1 == holding_cards[0].get_value():
+                table.add_cards(holding_cards)
+                for card in holding_cards:
+                    holding_card_group.remove_card()
+                    place_sound.play()
                     moves += 1
-                    return
+                return
     else:
         for idx, table in enumerate(tables):
             # Adjust the positions based on the number of piles you want
@@ -140,13 +155,28 @@ def place_card(mouse_x, mouse_y):
             # Check if the mouse is within the drop zone of a table pile
             if mouse_x > table.get_x() and mouse_x < table.get_x() + drop_zone_width and mouse_y > table.get_y() and mouse_y < table.get_y() + drop_zone_height:
                 bottom_card = table.bottom_card()
-                if bottom_card is None or (
+                if bottom_card is None and holding_cards[0].get_value() == 13:
+                    table.add_cards(holding_cards)
+                    for card in holding_cards:
+                        holding_card_group.remove_card()
+                        place_sound.play()
+                        moves += 1
+                    return
+                elif bottom_card is not None and (
                         bottom_card.get_color() != holding_cards[0].get_color() and bottom_card.get_value() - 1 ==
                         holding_cards[0].get_value()):
                     table.add_cards(holding_cards)
                     for card in holding_cards:
                         holding_card_group.remove_card()
-                        # place_sound.play()
+                        place_sound.play()
+                        moves += 1
+                    return
+            elif mouse_x > table.get_x() and mouse_x < table.get_x() + drop_zone_width and mouse_y > table.get_y() and mouse_y < table.get_y() + drop_zone_height:
+                if holding_cards[0].get_value() == 1:  # Check if the card is an Ace
+                    table.add_cards(holding_cards)
+                    for card in holding_cards:
+                        holding_card_group.remove_card()
+                        place_sound.play()
                         moves += 1
                     return
         else:
@@ -157,7 +187,7 @@ def place_card(mouse_x, mouse_y):
                         if foundation_card.get_value() + 1 == holding_cards[0].get_value():
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5
                             return
@@ -165,7 +195,7 @@ def place_card(mouse_x, mouse_y):
                         if holding_cards[0].get_value() == 1:
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5
                             return
@@ -229,17 +259,33 @@ def restart_game():
     moves = 0
 
 
-def game_loop():
-    global holding_cards, moves, score
+def check_if_game_won():
+    for foundation in foundations:
+        if len(foundation.get_foundation()) != 13:  # Assuming 13 cards in each foundation pile
+            return False
+    return True
 
-    restart_button = pygame.Rect(15, 25, 95, 40)  #(30, 480, 95, 40)
+
+selected_mode = "Classic Mode"  # Initialize the selected mode
+
+
+def game_loop():
+    global holding_cards, moves, score, selected_mode
+
+    deck = Deck()
+    deck.shuffle()
+
+    restart_button = pygame.Rect(15, 25, 95, 40)  # (30, 480, 95, 40)
     restart_text = "Classic"
 
     vegas_button = pygame.Rect(15, 85, 95, 40)
     vegas_text = "Vegas"
 
-    mute_button = pygame.Rect(15, 145, 95, 40)
-    mute_text = "Mute" if not pygame.mixer.music.get_busy() else "Unmute"
+    # mute_button = pygame.Rect(15, 145, 95, 40)
+    # mute_text = "Mute" if not pygame.mixer.music.get_busy() else "Unmute"
+    #
+    # undo_button = pygame.Rect(15, 205, 95, 40)
+    # undo_text = "Undo"
 
     def restart_game_with_negative_score():
         global deck, waste, tables, foundations, moves, score, start_time
@@ -277,21 +323,23 @@ def game_loop():
                     moves = 0
                     score = 0
                     start_time = pygame.time.get_ticks()  # Reset the timer
+                    selected_mode = "Classic Mode"  # Update the selected mode
 
                 # Check if the Vegas button is clicked
                 if vegas_button.collidepoint(mouse_x, mouse_y):
                     restart_game_with_negative_score()
                     moves = 0
                     start_time = pygame.time.get_ticks()  # Reset the timer
+                    selected_mode = "Vegas Mode"  # Update the selected mode
 
-                # Check if the mute button is clicked
-                if mute_button.collidepoint(mouse_x, mouse_y):
-                    if pygame.mixer.music.get_busy():
-                        pygame.mixer.music.pause()
-                        mute_text = "Unmute"
-                    else:
-                        pygame.mixer.music.unpause()
-                        mute_text = "Mute"
+                # # Check if the mute button is clicked
+                # if mute_button.collidepoint(mouse_x, mouse_y):
+                #     if pygame.mixer.music.get_busy():
+                #         pygame.mixer.music.pause()
+                #         mute_text = "Unmute"
+                #     else:
+                #         pygame.mixer.music.unpause()
+                #         mute_text = "Mute"
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if holding_cards != []:
@@ -334,10 +382,6 @@ def game_loop():
         pygame.draw.rect(screen, (1, 1, 31), vegas_button)
         message_display(vegas_text, (vegas_button.centerx, vegas_button.centery), color=(255, 255, 255), font_size=26)
 
-        # Draw mute button
-        pygame.draw.rect(screen, (1, 1, 31), mute_button)
-        message_display(mute_text, (mute_button.centerx, mute_button.centery), color=(255, 255, 255), font_size=26)
-
         # Calculate and draw elapsed time
         elapsed_time = (pygame.time.get_ticks() - start_time) // 1000  # Convert milliseconds to seconds
         minutes = elapsed_time // 60
@@ -346,12 +390,28 @@ def game_loop():
         message_display("Time:", (40, 651), color=(255, 255, 255), font_size=28)
         message_display(time_text, (100, 651), color=(255, 255, 255), font_size=28)
 
-        # Draw moves and score
+        # Draw score
+        message_display("Score:", (42, 611), color=(255, 255, 255), font_size=28)
+        message_display(str(score), (88, 611), color=(255, 255, 255), font_size=28)
+
+        # Draw current mode
+        message_display(selected_mode, (65, 690), color=(255, 200, 0), font_size=26)
+
+        # Check and display "You Win!" message if the game is won
+        if check_if_game_won():
+            message_display("You Win!", (window_size[0] // 2, window_size[1] // 2), color=(255, 255, 255), font_size=48)
+
+        # Draw mute button
+        # pygame.draw.rect(screen, (1, 1, 31), mute_button)
+        # message_display(mute_text, (mute_button.centerx, mute_button.centery), color=(255, 255, 255), font_size=26)
+
+        # Draw moves
         # message_display("Moves", (42, 571), color=(255, 255, 255), font_size=24)
         # message_display(str(moves), (88, 571), color=(255, 255, 255), font_size=24)
 
-        message_display("Score:", (42, 611), color=(255, 255, 255), font_size=28)
-        message_display(str(score), (88, 611), color=(255, 255, 255), font_size=28)
+        # # Draw undo button
+        # pygame.draw.rect(screen, (1, 1, 31), undo_button)
+        # message_display(undo_text, (undo_button.centerx, undo_button.centery), color=(255, 255, 255), font_size=26)
 
         pygame.display.update()
         clock.tick(60)

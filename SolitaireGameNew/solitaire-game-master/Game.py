@@ -308,7 +308,9 @@ def game_loop():
 
     start_time = pygame.time.get_ticks()  # Get the start time
 
-    while game_is_running:
+    game_running = True  # Flag to control the game loop
+
+    while game_running:
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -348,8 +350,7 @@ def game_loop():
                     # set because if card is placed the new ones need to pop out
                     waste.set_cards()
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+                game_running = False  # Set the flag to exit the game loop
 
         # Draw background image to screen (behind everything)
         screen.blit(backgroundImage, (0, 0))
@@ -413,8 +414,13 @@ def game_loop():
         # pygame.draw.rect(screen, (1, 1, 31), undo_button)
         # message_display(undo_text, (undo_button.centerx, undo_button.centery), color=(255, 255, 255), font_size=26)
 
+        # Update the display
         pygame.display.update()
         clock.tick(60)
 
+    # Clean up and quit pygame
+    pygame.quit()
 
+
+# Start the game loop
 game_loop()

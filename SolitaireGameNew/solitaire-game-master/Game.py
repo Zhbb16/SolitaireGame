@@ -31,9 +31,9 @@ score = 0
 frame = 0
 time = 0
 
-# place_sound = pygame.mixer.Sound('assets/flip.wav')
-# shuffle_sound = pygame.mixer.Sound('assets/shuffle.wav')
-# shuffle_sound.play()
+place_sound = pygame.mixer.Sound('assets/flip.wav')
+shuffle_sound = pygame.mixer.Sound('assets/shuffle.wav')
+shuffle_sound.play()
 
 
 def clicked_new_card(mouse_x, mouse_y):
@@ -43,11 +43,11 @@ def clicked_new_card(mouse_x, mouse_y):
         if len(deck.get_deck()) <= 0:
             deck.add_cards(list(reversed(waste.get_waste_pile().copy())))
             waste.empty()
-            # shuffle_sound.play()
+            shuffle_sound.play()
         else:
             moves += 1
             waste.add_card(deck.remove_card())
-            # place_sound.play()
+            place_sound.play()
 
 
 def check_holding_card(mouse_x, mouse_y):
@@ -94,7 +94,7 @@ def place_card(mouse_x, mouse_y):
                         if foundation_card.get_value() + 1 == holding_cards[0].get_value():
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5  # Increment score by 5
                             return
@@ -102,7 +102,7 @@ def place_card(mouse_x, mouse_y):
                         if holding_cards[0].get_value() == 1:
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5  # Increment score by 5
                             return
@@ -116,7 +116,7 @@ def place_card(mouse_x, mouse_y):
                     table.add_cards(holding_cards)
                     for card in holding_cards:
                         holding_card_group.remove_card()
-                        # place_sound.play()
+                        place_sound.play()
                         moves += 1
                     return
             else:
@@ -124,7 +124,7 @@ def place_card(mouse_x, mouse_y):
                     table.add_cards(holding_cards)
                     for card in holding_cards:
                         holding_card_group.remove_card()
-                    # place_sound.play()
+                    place_sound.play()
                     moves += 1
                     return
     else:
@@ -146,7 +146,7 @@ def place_card(mouse_x, mouse_y):
                     table.add_cards(holding_cards)
                     for card in holding_cards:
                         holding_card_group.remove_card()
-                        # place_sound.play()
+                        place_sound.play()
                         moves += 1
                     return
         else:
@@ -157,7 +157,7 @@ def place_card(mouse_x, mouse_y):
                         if foundation_card.get_value() + 1 == holding_cards[0].get_value():
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5
                             return
@@ -165,7 +165,7 @@ def place_card(mouse_x, mouse_y):
                         if holding_cards[0].get_value() == 1:
                             foundation.add_card(holding_cards[0])
                             holding_card_group.remove_card()
-                            # place_sound.play()
+                            place_sound.play()
                             moves += 1
                             score += 5
                             return
@@ -277,12 +277,14 @@ def game_loop():
                     moves = 0
                     score = 0
                     start_time = pygame.time.get_ticks()  # Reset the timer
+                    shuffle_sound.play()
 
                 # Check if the Vegas button is clicked
                 if vegas_button.collidepoint(mouse_x, mouse_y):
                     restart_game_with_negative_score()
                     moves = 0
                     start_time = pygame.time.get_ticks()  # Reset the timer
+                    shuffle_sound.play()
 
                 # Check if the mute button is clicked
                 if mute_button.collidepoint(mouse_x, mouse_y):
